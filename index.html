@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LazyList AI — Do less. Stress less. 🦥</title>
+  <meta name="description" content="A lightweight, tranquil task organizer for the Slow and Steady hackathon. Categorize tasks into Do Now, Do Later, and Skip or Simplify.">
+
+  <!-- Google Fonts: Plus Jakarta Sans for clean, modern typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & CSS VARIABLES
+       Minimal, modern cream & soft green palette
+       ========================================================================== */
+    :root {
+      --bg-cream: #FAF7F2;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #F3ECE1;
+      --bg-hover: #EBE3D5;
+      
+      --text-main: #2A362B;
+      --text-muted: #647366;
+      --text-light: #8E9C90;
+
+      /* Soft Green Accents */
+      --green-primary: #3F704D;
+      --green-hover: #325B3E;
+      --green-soft: #5C8F6B;
+      --green-light: #EBF3ED;
+      --green-border: #C2DEC9;
+
+      /* Category Colors */
+      --do-now-bg: #FCF5EB;
+      --do-now-border: #EED7BA;
+      --do-now-text: #8C4E15;
+      --do-now-badge: #F5E5D0;
+
+      --do-later-bg: #EEF5F1;
+      --do-later-border: #BCD9C5;
+      --do-later-text: #26633A;
+      --do-later-badge: #D6EBDE;
+
+      --skip-bg: #F5F3F8;
+      --skip-border: #D8D2E2;
+      --skip-text: #594770;
+      --skip-badge: #E7E2EE;
+
+      --border-color: #E6DED2;
+      --shadow-sm: 0 2px 8px rgba(42, 54, 43, 0.04);
+      --shadow-md: 0 6px 20px rgba(42, 54, 43, 0.07);
+      --shadow-lg: 0 12px 32px rgba(42, 54, 43, 0.09);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Reset & Base Setup */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+      padding: 1.5rem 1rem 2.5rem;
+    }
+
+    /* Subtle background ambient glow for premium aesthetic */
+    body::before {
+      content: "";
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(194, 222, 201, 0.35) 0%, rgba(250, 247, 242, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+      flex: 1;
+    }
+
+    /* ==========================================================================
+       HEADER SECTION
+       ========================================================================== */
+    header {
+      text-align: center;
+      padding: 1.25rem 0 0.5rem;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background-color: var(--green-light);
+      border: 1px solid var(--green-border);
+      color: var(--green-primary);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: var(--radius-full);
+      margin-bottom: 0.85rem;
+      box-shadow: var(--shadow-sm);
+      animation: floatSloth 4s ease-in-out infinite;
+    }
+
+    .brand-badge .sloth-icon {
+      font-size: 1.15rem;
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+
+    .brand-badge:hover .sloth-icon {
+      transform: rotate(-10deg) scale(1.15);
+    }
+
+    @keyframes floatSloth {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 0.4rem;
+    }
+
+    .tagline {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--green-soft);
+      margin-bottom: 0.25rem;
+    }
+
+    .sub-tagline {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Mode Banner & AI status badge */
+    .mode-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-fast);
+    }
+
+    .mode-pill.demo {
+      border-color: var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .mode-pill.ollama-active {
+      background-color: var(--green-light);
+      border-color: var(--green-border);
+      color: var(--green-primary);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #8E9C90;
+      display: inline-block;
+    }
+
+    .ollama-active .pulse-dot {
+      background-color: var(--green-primary);
+      box-shadow: 0 0 0 3px rgba(63, 112, 77, 0.2);
+    }
+
+    .toggle-ai-btn {
+      background: none;
+      border: none;
+      color: var(--green-primary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      font-family: inherit;
+      transition: color var(--transition-fast);
+    }
+
+    .toggle-ai-btn:hover {
+      color: var(--green-hover);
+    }
+
+    /* ==========================================================================
+       AI SETTINGS ACCORDION (OPTIONAL OLLAMA)
+       ========================================================================== */
+    .ollama-settings-panel {
+      display: none;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      margin-top: -0.5rem;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .ollama-settings-panel.active {
+      display: block;
+    }
+
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .settings-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-main);
+    }
+
+    .settings-close-btn {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+
+    .settings-desc {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+      line-height: 1.45;
+    }
+
+    .settings-form-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .settings-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.85rem;
+      font-family: inherit;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: var(--bg-cream);
+      color: var(--text-main);
+    }
+
+    .settings-btn {
+      background-color: var(--green-primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background-color var(--transition-fast);
+    }
+
+    .settings-btn:hover {
+      background-color: var(--green-hover);
+    }
+
+    .ollama-status-msg {
+      margin-top: 0.6rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       MAIN CARD / INPUT CARD
+       ========================================================================== */
+    .card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+      transition: box-shadow var(--transition-normal);
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .input-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .input-label {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .task-counter {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background-color: var(--bg-subtle);
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+    }
+
+    .task-textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      background-color: var(--bg-cream);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      resize: vertical;
+      line-height: 1.6;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .task-textarea:focus {
+      outline: none;
+      border-color: var(--green-soft);
+      background-color: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(92, 143, 107, 0.2);
+    }
+
+    .task-textarea::placeholder {
+      color: var(--text-light);
+      font-weight: 400;
+    }
+
+    /* Validation Alert Message */
+    .validation-msg {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: #FDF2E9;
+      border: 1px solid #F5CBA7;
+      color: #9C5212;
+      padding: 0.7rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-top: 0.85rem;
+      animation: shake 0.4s ease-in-out;
+    }
+
+    .validation-msg.active {
+      display: flex;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    /* Input Actions Bar */
+    .input-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.15rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.7rem 1.35rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-normal);
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-subtle);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-main);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background-color: var(--green-primary);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(63, 112, 77, 0.25);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--green-hover);
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 16px rgba(63, 112, 77, 0.35);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* Small Loading Spinner & State */
+    .loading-state {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .loading-state.active {
+      display: block;
+    }
+
+    .loading-sloth-wrapper {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-sloth-icon {
+      font-size: 2.2rem;
+      animation: gentleSway 2.4s ease-in-out infinite;
+      transform-origin: top center;
+    }
+
+    .loading-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 3px solid rgba(63, 112, 77, 0.15);
+      border-top-color: var(--green-primary);
+      border-radius: 50%;
+      animation: spin 1.2s linear infinite;
+    }
+
+    @keyframes gentleSway {
+      0%, 100% { transform: rotate(-8deg); }
+      50% { transform: rotate(8deg); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-weight: 700;
+      color: var(--text-main);
+      font-size: 1.05rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .loading-subtext {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    /* ==========================================================================
+       RESULTS SECTION (3 CARDS)
+       ========================================================================== */
+    .results-section {
+      display: none;
+      flex-direction: column;
+      gap: 1.25rem;
+      animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .results-section.active {
+      display: flex;
+    }
+
+    .results-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0 0.25rem;
+    }
+
+    .results-mode-badge {
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .results-mode-badge.ai-badge {
+      background: var(--green-light);
+      border-color: var(--green-border);
+      color: var(--green-primary);
+    }
+
+    .results-actions-top {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-sm {
+      padding: 0.45rem 0.95rem;
+      font-size: 0.85rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* The 3 Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 820px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .result-card {
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      border-width: 1.5px;
+      border-style: solid;
+      position: relative;
+      transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    }
+
+    .result-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Category Specific Styles */
+    .result-card.do-now {
+      background-color: var(--do-now-bg);
+      border-color: var(--do-now-border);
+    }
+
+    .result-card.do-later {
+      background-color: var(--do-later-bg);
+      border-color: var(--do-later-border);
+    }
+
+    .result-card.skip {
+      background-color: var(--skip-bg);
+      border-color: var(--skip-border);
+    }
+
+    .card-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .result-card.do-now .card-title { color: var(--do-now-text); }
+    .result-card.do-later .card-title { color: var(--do-later-text); }
+    .result-card.skip .card-title { color: var(--skip-text); }
+
+    .category-count {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      border-radius: var(--radius-full);
+    }
+
+    .result-card.do-now .category-count { background-color: var(--do-now-badge); color: var(--do-now-text); }
+    .result-card.do-later .category-count { background-color: var(--do-later-badge); color: var(--do-later-text); }
+    .result-card.skip .category-count { background-color: var(--skip-badge); color: var(--skip-text); }
+
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      line-height: 1.35;
+    }
+
+    /* Task Items List */
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      flex: 1;
+    }
+
+    .task-item {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 0.65rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-main);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .task-item:hover {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+      transform: translateX(1px);
+    }
+
+    .task-checkbox {
+      margin-top: 0.2rem;
+      accent-color: var(--green-primary);
+      cursor: pointer;
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    .task-text {
+      flex: 1;
+      word-break: break-word;
+      transition: opacity var(--transition-fast), text-decoration var(--transition-fast);
+    }
+
+    .task-item.completed {
+      opacity: 0.55;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .empty-category-msg {
+      padding: 1.5rem 0.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      font-style: italic;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .empty-category-msg .sloth-tiny {
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+
+    /* Bottom Actions Row */
+    .results-bottom-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    /* ==========================================================================
+       TOAST NOTIFICATION
+       ========================================================================== */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text-main);
+      color: #FFFFFF;
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius-full);
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    footer {
+      text-align: center;
+      margin-top: auto;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .footer-quote {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--green-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .footer-sub {
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+
+    /* Animation Utilities */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <div class="brand-badge">
+        <span class="sloth-icon">🦥</span>
+        <span>LazyList AI</span>
+      </div>
+      <h1>Your tasks. Less stress.</h1>
+      <p class="tagline">Do less. Stress less. 🦥</p>
+      <p class="sub-tagline">Paste your overwhelming task list. We'll trim the noise and prioritize gently for calm productivity.</p>
+
+      <!-- Active Mode Pill -->
+      <div class="mode-bar">
+        <div id="modePill" class="mode-pill demo">
+          <span class="pulse-dot"></span>
+          <span id="modeLabel">Demo Mode — Rule-based sorting</span>
+        </div>
+        <button id="toggleAiPanelBtn" class="toggle-ai-btn" type="button" aria-expanded="false" aria-controls="ollamaPanel">
+          ⚙️ Optional Local Ollama (qwen2.5:0.5b)
+        </button>
+      </div>
+    </header>
+
+    <!-- OPTIONAL OLLAMA SETTINGS ACCORDION -->
+    <div id="ollamaPanel" class="ollama-settings-panel" role="region" aria-label="Ollama AI Settings">
+      <div class="settings-header">
+        <span class="settings-title">🦥 Local Ollama AI Settings (qwen2.5:0.5b)</span>
+        <button id="closeAiPanelBtn" class="settings-close-btn" aria-label="Close settings">&times;</button>
+      </div>
+      <p class="settings-desc">
+        Run genuine open-weight AI completely on your local machine with <strong>qwen2.5:0.5b</strong>. No paid API, 100% private.
+        If Ollama is not running, LazyList AI automatically continues in <strong>Demo Mode — Rule-based sorting</strong>.
+      </p>
+      <div class="settings-form-row">
+        <input 
+          type="text" 
+          id="ollamaEndpointInput" 
+          class="settings-input" 
+          value="http://localhost:11434" 
+          placeholder="Ollama URL (default: http://localhost:11434)"
+          aria-label="Ollama Endpoint URL"
+        >
+        <button id="testOllamaBtn" class="settings-btn" type="button">Test Connection</button>
+        <button id="enableOllamaBtn" class="settings-btn" type="button" style="background-color: var(--text-main);">Use Ollama</button>
+      </div>
+      <div id="ollamaStatusMsg" class="ollama-status-msg">
+        💡 <em>Quick setup:</em> run <code>ollama run qwen2.5:0.5b</code> in your terminal. Note: If opening as a local file, ensure Ollama allows origins via <code>OLLAMA_ORIGINS="*" ollama serve</code>.
+      </div>
+    </div>
+
+    <!-- MAIN INPUT CARD -->
+    <main class="card" id="inputCard">
+      <div class="input-header">
+        <label for="taskInput" class="input-label">
+          <span>📝 Enter your tasks</span>
+          <span style="font-weight: 400; font-size: 0.85rem; color: var(--text-muted);">(one per line)</span>
+        </label>
+        <span id="taskCounter" class="task-counter">0 tasks entered</span>
+      </div>
+
+      <textarea 
+        id="taskInput" 
+        class="task-textarea" 
+        rows="6" 
+        placeholder="Type or paste your tasks here...&#10;e.g.&#10;Pay electricity bill today&#10;Read 14 papers on quantum physics&#10;Overhaul entire life routine by 6am&#10;Water the succulent plants&#10;Schedule dentist checkup"
+        aria-label="Task input area, one task per line"
+      ></textarea>
+
+      <!-- Friendly Validation Alert -->
+      <div id="validationAlert" class="validation-msg" role="alert">
+        <span>🦥 Take it easy! Please enter at least one task before sorting.</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="input-actions">
+        <button type="button" id="sampleBtn" class="btn btn-secondary">
+          ✨ Try Sample Tasks
+        </button>
+        <button type="button" id="sortBtn" class="btn btn-primary">
+          Sort My Tasks 🦥
+        </button>
+      </div>
+    </main>
+
+    <!-- LOADING STATE -->
+    <section id="loadingState" class="loading-state" aria-live="polite">
+      <div class="loading-sloth-wrapper">
+        <div class="loading-ring"></div>
+        <div class="loading-sloth-icon">🦥</div>
+      </div>
+      <div class="loading-text" id="loadingTitle">Taking a deep breath and sorting slowly...</div>
+      <div class="loading-subtext" id="loadingSubtitle">Trimming the noise, keeping it peaceful.</div>
+    </section>
+
+    <!-- RESULTS SECTION -->
+    <section id="resultsSection" class="results-section" aria-label="Categorized task results">
+      <div class="results-top-bar">
+        <div id="resultsBadge" class="results-mode-badge">
+          <span>🌿</span>
+          <span id="resultsModeText">Demo Mode — Rule-based sorting</span>
+        </div>
+        <div class="results-actions-top">
+          <button type="button" id="copyTopBtn" class="btn btn-secondary btn-sm">
+            📋 Copy Results
+          </button>
+          <button type="button" id="restartTopBtn" class="btn btn-secondary btn-sm">
+            🔄 Start Over
+          </button>
+        </div>
+      </div>
+
+      <!-- 3 CATEGORY CARDS -->
+      <div class="cards-grid">
+        <!-- 1. DO NOW -->
+        <article class="result-card do-now" id="cardDoNow">
+          <div class="card-header-bar">
+            <h2 class="card-title">
+              <span>⚡</span>
+              <span>Do Now</span>
+            </h2>
+            <span class="category-count" id="countDoNow">0</span>
+          </div>
+          <p class="card-subtitle">Urgent or high-impact tasks. Knock these out first with calm focus.</p>
+          <ul class="task-list" id="listDoNow"></ul>
+        </article>
+
+        <!-- 2. DO LATER -->
+        <article class="result-card do-later" id="cardDoLater">
+          <div class="card-header-bar">
+            <h2 class="card-title">
+              <span>🌿</span>
+              <span>Do Later</span>
+            </h2>
+            <span class="category-count" id="countDoLater">0</span>
+          </div>
+          <p class="card-subtitle">Important, but no rush for today. Schedule or handle when rested.</p>
+          <ul class="task-list" id="listDoLater"></ul>
+        </article>
+
+        <!-- 3. SKIP OR SIMPLIFY -->
+        <article class="result-card skip" id="cardSkip">
+          <div class="card-header-bar">
+            <h2 class="card-title">
+              <span>🦥</span>
+              <span>Skip or Simplify</span>
+            </h2>
+            <span class="category-count" id="countSkip">0</span>
+          </div>
+          <p class="card-subtitle">Overcomplicated or low leverage. Delegate, shrink, or happily drop.</p>
+          <ul class="task-list" id="listSkip"></ul>
+        </article>
+      </div>
+
+      <!-- BOTTOM ACTIONS -->
+      <div class="results-bottom-actions">
+        <button type="button" id="copyBottomBtn" class="btn btn-secondary">
+          📋 Copy Results
+        </button>
+        <button type="button" id="restartBottomBtn" class="btn btn-primary">
+          🔄 Start Over
+        </button>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <p class="footer-quote">Less busywork. More breathing room.</p>
+      <p class="footer-sub">LazyList AI &bull; Built for the Slow and Steady hackathon &bull; Open-weight &amp; zero-cost design</p>
+    </footer>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <span>📋 Results copied to clipboard! 🦥</span>
+  </div>
+
+  <!-- ==========================================================================
+       JAVASCRIPT LOGIC
+       Vanilla JavaScript only.
+       Clean separation between UI state, sorting heuristics, and optional Ollama AI.
+       ========================================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      // -----------------------------------------------------------------------
+      // CONFIGURATION & STATE
+      // -----------------------------------------------------------------------
+      const state = {
+        preferOllama: false,
+        ollamaUrl: "http://localhost:11434",
+        ollamaModel: "qwen2.5:0.5b",
+        isOllamaReachable: false,
+        currentModeUsed: "demo", // 'demo' | 'ollama'
+        lastSortedData: null,
+        sampleIndex: 0
+      };
+
+      // Sample task presets for "Try Sample Tasks"
+      const samplePresets = [
+        [
+          "Pay electricity bill before midnight",
+          "Deep clean behind the refrigerator coils",
+          "Send quick project update to team",
+          "Read 12 academic papers on quantum theory",
+          "Water the kitchen herbs",
+          "Schedule annual dentist checkup",
+          "Overhaul my entire life routine by 6:00 AM",
+          "Review pull request for login fix"
+        ],
+        [
+          "Fix urgent checkout bug for customer",
+          "Reorganize every single file on desktop into 50 subfolders",
+          "Reply to client email regarding contract",
+          "Plan roadmap for next quarter",
+          "Color-code personal bookshelf by emotional resonance",
+          "Take a 15-minute screen break walk",
+          "Submit tax receipts to accountant"
+        ],
+        [
+          "Submit hackathon project submission",
+          "Memorize entire Spanish dictionary this afternoon",
+          "Call mom for birthday",
+          "Draft bullet points for blog post",
+          "Micro-optimize CSS transitions for 4 hours",
+          "Unsubscribe from spam newsletters"
+        ]
+      ];
+
+      // DOM Elements
+      const taskInput = document.getElementById("taskInput");
+      const taskCounter = document.getElementById("taskCounter");
+      const validationAlert = document.getElementById("validationAlert");
+      const sampleBtn = document.getElementById("sampleBtn");
+      const sortBtn = document.getElementById("sortBtn");
+      
+      const loadingState = document.getElementById("loadingState");
+      const loadingTitle = document.getElementById("loadingTitle");
+      const loadingSubtitle = document.getElementById("loadingSubtitle");
+      
+      const resultsSection = document.getElementById("resultsSection");
+      const inputCard = document.getElementById("inputCard");
+      const resultsBadge = document.getElementById("resultsBadge");
+      const resultsModeText = document.getElementById("resultsModeText");
+      
+      const listDoNow = document.getElementById("listDoNow");
+      const listDoLater = document.getElementById("listDoLater");
+      const listSkip = document.getElementById("listSkip");
+      
+      const countDoNow = document.getElementById("countDoNow");
+      const countDoLater = document.getElementById("countDoLater");
+      const countSkip = document.getElementById("countSkip");
+
+      const copyTopBtn = document.getElementById("copyTopBtn");
+      const copyBottomBtn = document.getElementById("copyBottomBtn");
+      const restartTopBtn = document.getElementById("restartTopBtn");
+      const restartBottomBtn = document.getElementById("restartBottomBtn");
+      const toast = document.getElementById("toast");
+
+      // Mode & Settings Elements
+      const modePill = document.getElementById("modePill");
+      const modeLabel = document.getElementById("modeLabel");
+      const toggleAiPanelBtn = document.getElementById("toggleAiPanelBtn");
+      const closeAiPanelBtn = document.getElementById("closeAiPanelBtn");
+      const ollamaPanel = document.getElementById("ollamaPanel");
+      const ollamaEndpointInput = document.getElementById("ollamaEndpointInput");
+      const testOllamaBtn = document.getElementById("testOllamaBtn");
+      const enableOllamaBtn = document.getElementById("enableOllamaBtn");
+      const ollamaStatusMsg = document.getElementById("ollamaStatusMsg");
+
+      // -----------------------------------------------------------------------
+      // CORE AI FUNCTION: sortTasksWithAI
+      // Requirements:
+      // 1. Clearly separated JavaScript function called sortTasksWithAI(tasks)
+      // 2. Uses genuine open-weight AI (qwen2.5:0.5b via local Ollama chat API)
+      //    when enabled and reachable.
+      // 3. Transparent, lightweight rule-based fallback when Ollama is unavailable,
+      //    clearly labeled as "Demo Mode — Rule-based sorting".
+      // -----------------------------------------------------------------------
+      async function sortTasksWithAI(rawTasks) {
+        // Clean and filter empty lines
+        const taskList = rawTasks
+          .map(t => t.trim())
+          .filter(t => t.length > 0);
+
+        if (taskList.length === 0) {
+          return {
+            mode: "demo",
+            modelName: "None",
+            label: "Demo Mode — Rule-based sorting",
+            categories: { doNow: [], doLater: [], skipOrSimplify: [] }
+          };
+        }
+
+        // If user enabled Ollama, attempt local Ollama AI call
+        if (state.preferOllama) {
+          try {
+            const aiResult = await callLocalOllama(taskList);
+            if (aiResult && aiResult.success) {
+              return {
+                mode: "ollama",
+                modelName: state.ollamaModel,
+                label: `Ollama AI (${state.ollamaModel})`,
+                categories: aiResult.categories
+              };
+            }
+          } catch (err) {
+            console.warn("Ollama AI request failed or unavailable, falling back to Demo Mode:", err);
+          }
+        }
+
+        // Transparent Fallback: Rule-Based Heuristic Sorting
+        // Clearly labeled as Demo Mode — Rule-based sorting
+        const heuristicResult = ruleBasedTaskClassifier(taskList);
+        return {
+          mode: "demo",
+          modelName: "Rule-based heuristic engine",
+          label: "Demo Mode — Rule-based sorting",
+          categories: heuristicResult
+        };
+      }
+
+      // -----------------------------------------------------------------------
+      // LOCAL OLLAMA INTEGRATION (qwen2.5:0.5b)
+      // Open-weight local inference using Ollama's HTTP API
+      // -----------------------------------------------------------------------
+      async function callLocalOllama(taskList) {
+        const endpoint = `${state.ollamaUrl.replace(/\/+$/, "")}/api/chat`;
+
+        const systemPrompt = `You are LazyList AI for the 'Slow and Steady' hackathon. Your job is to help users do less and stress less.
+Categorize each given task into exactly ONE of these three categories:
+1. "do_now": Urgent, time-sensitive, high impact (e.g. today's deadlines, critical bills, quick fixes).
+2. "do_later": Important but not urgent (e.g. scheduling, planning, long-term learning).
+3. "skip_or_simplify": Overcomplicated, low leverage, busywork, perfectionism, or tasks that can be dropped or delegated.
+
+You MUST respond with STRICT valid JSON matching this schema:
+{
+  "do_now": ["task text..."],
+  "do_later": ["task text..."],
+  "skip_or_simplify": ["task text..."]
+}
+Do not include markdown fences, explanations, or any extra text.`;
+
+        const userPrompt = `Here is the user's task list:\n${taskList.map((t, idx) => `${idx + 1}. ${t}`).join("\n")}`;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s safety timeout
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: state.ollamaModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt }
+            ],
+            stream: false,
+            format: "json"
+          })
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`Ollama HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const contentStr = data.message?.content || "";
+        
+        // Parse JSON output from model
+        const parsed = JSON.parse(contentStr);
+        
+        return {
+          success: true,
+          categories: {
+            doNow: Array.isArray(parsed.do_now) ? parsed.do_now : [],
+            doLater: Array.isArray(parsed.do_later) ? parsed.do_later : [],
+            skipOrSimplify: Array.isArray(parsed.skip_or_simplify) ? parsed.skip_or_simplify : []
+          }
+        };
+      }
+
+      // -----------------------------------------------------------------------
+      // DEMO MODE: RULE-BASED HEURISTIC ENGINE
+      // Transparent fallback sorting using keyword matching and heuristics.
+      // -----------------------------------------------------------------------
+      function ruleBasedTaskClassifier(taskList) {
+        const doNow = [];
+        const doLater = [];
+        const skipOrSimplify = [];
+
+        // Keywords indicating urgency / high-impact immediate action
+        const doNowKeywords = [
+          "today", "asap", "urgent", "now", "deadline", "pay", "bill", "due",
+          "emergency", "fix", "submit", "call", "doctor", "dentist", "bug",
+          "client", "boss", "email", "mail", "checkout", "tonight", "finish",
+          "tax", "taxes", "receipt", "exam", "interview"
+        ];
+
+        // Keywords indicating perfectionism, busywork, excessive scope, or skippable items
+        const skipKeywords = [
+          "overhaul", "entire", "every single", "perfection", "reorganize everything",
+          "color-code", "color code", "binge", "endless", "memorize", "micro-optimize",
+          "all 50", "all 100", "clean behind the refrigerator", "browse", "scroll",
+          "obsess", "overthinking", "from scratch", "unnecessary", "someday",
+          "read 12", "read 14", "read 20", "quantum", "fluff"
+        ];
+
+        // Keywords indicating scheduling, long-term, or relaxed timing
+        const doLaterKeywords = [
+          "plan", "schedule", "next week", "later", "roadmap", "weekend",
+          "research", "think", "decide", "review", "explore", "draft",
+          "ideas", "future", "organize", "consider", "learn"
+        ];
+
+        taskList.forEach((task, index) => {
+          const lower = task.toLowerCase();
+
+          // Check Skip or Simplify first (trims overcomplicated tasks)
+          if (skipKeywords.some(kw => lower.includes(kw))) {
+            skipOrSimplify.push(task);
+            return;
+          }
+
+          // Check Do Now (urgent / immediate items)
+          if (doNowKeywords.some(kw => lower.includes(kw))) {
+            doNow.push(task);
+            return;
+          }
+
+          // Check Do Later
+          if (doLaterKeywords.some(kw => lower.includes(kw))) {
+            doLater.push(task);
+            return;
+          }
+
+          // Balanced distribution fallback for neutral tasks
+          // Maintains healthy distribution across categories
+          const mod = index % 3;
+          if (mod === 0) {
+            doLater.push(task);
+          } else if (mod === 1) {
+            doNow.push(task);
+          } else {
+            skipOrSimplify.push(task);
+          }
+        });
+
+        return {
+          doNow,
+          doLater,
+          skipOrSimplify
+        };
+      }
+
+      // -----------------------------------------------------------------------
+      // UI CONTROLLER & EVENT LISTENERS
+      // -----------------------------------------------------------------------
+
+      // Update task counter as user types
+      function updateTaskCounter() {
+        const lines = taskInput.value.split("\n").filter(l => l.trim().length > 0);
+        const count = lines.length;
+        taskCounter.textContent = `${count} task${count === 1 ? "" : "s"} entered`;
+        if (count > 0) {
+          validationAlert.classList.remove("active");
+        }
+      }
+
+      taskInput.addEventListener("input", updateTaskCounter);
+
+      // "Try Sample Tasks" Button
+      sampleBtn.addEventListener("click", () => {
+        const preset = samplePresets[state.sampleIndex % samplePresets.length];
+        state.sampleIndex++;
+        taskInput.value = preset.join("\n");
+        validationAlert.classList.remove("active");
+        updateTaskCounter();
+        showToast("✨ Sample tasks loaded!");
+        taskInput.focus();
+      });
+
+      // "Sort My Tasks 🦥" Button
+      sortBtn.addEventListener("click", async () => {
+        const rawText = taskInput.value.trim();
+        if (!rawText) {
+          validationAlert.classList.add("active");
+          taskInput.focus();
+          return;
+        }
+
+        validationAlert.classList.remove("active");
+        const lines = taskInput.value.split("\n");
+
+        // Show loading state with tranquil sloth animation
+        loadingTitle.textContent = state.preferOllama 
+          ? `Consulting local Ollama (${state.ollamaModel})... 🦥`
+          : "Taking a deep breath and sorting slowly... 🦥";
+        loadingSubtitle.textContent = state.preferOllama
+          ? "Running on your hardware without any cloud API."
+          : "Sorting with calm heuristics. Less noise, more focus.";
+        
+        loadingState.classList.add("active");
+        inputCard.style.display = "none";
+        resultsSection.classList.remove("active");
+
+        // Small deliberate pause (450ms) to deliver the relaxing "slow and steady" brand vibe
+        const startTime = Date.now();
+        const sortedResult = await sortTasksWithAI(lines);
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 450) {
+          await new Promise(r => setTimeout(r, 450 - elapsed));
+        }
+
+        state.lastSortedData = sortedResult;
+
+        // Hide loading and render results
+        loadingState.classList.remove("active");
+        renderResults(sortedResult);
+      });
+
+      // Render the 3 Result Cards
+      function renderResults(result) {
+        state.currentModeUsed = result.mode;
+        
+        // Update results mode badge
+        if (result.mode === "ollama") {
+          resultsBadge.className = "results-mode-badge ai-badge";
+          resultsModeText.innerHTML = `🤖 ${result.label}`;
+        } else {
+          resultsBadge.className = "results-mode-badge";
+          resultsModeText.innerHTML = `🌿 ${result.label}`;
+        }
+
+        // Render Do Now
+        renderList(listDoNow, countDoNow, result.categories.doNow, "No urgent fires right now. Take a deep breath! 🦥");
+        // Render Do Later
+        renderList(listDoLater, countDoLater, result.categories.doLater, "Nothing deferred. Clear schedule ahead! 🌿");
+        // Render Skip or Simplify
+        renderList(listSkip, countSkip, result.categories.skipOrSimplify, "No skippable fluff detected. Crisp list! ✨");
+
+        resultsSection.classList.add("active");
+        window.scrollTo({ top: resultsSection.offsetTop - 30, behavior: "smooth" });
+      }
+
+      function renderList(listEl, countEl, items, emptyMessage) {
+        listEl.innerHTML = "";
+        countEl.textContent = items.length;
+
+        if (items.length === 0) {
+          const emptyLi = document.createElement("div");
+          emptyLi.className = "empty-category-msg";
+          emptyLi.innerHTML = `<span class="sloth-tiny">🦥</span><span>${emptyMessage}</span>`;
+          listEl.appendChild(emptyLi);
+          return;
+        }
+
+        items.forEach((taskText) => {
+          const li = document.createElement("li");
+          li.className = "task-item";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "task-checkbox";
+          checkbox.setAttribute("aria-label", `Mark "${taskText}" as done`);
+
+          const span = document.createElement("span");
+          span.className = "task-text";
+          span.textContent = taskText;
+
+          // Toggle complete state on click
+          function toggleDone() {
+            checkbox.checked = !checkbox.checked;
+            li.classList.toggle("completed", checkbox.checked);
+          }
+
+          checkbox.addEventListener("click", (e) => {
+            e.stopPropagation();
+            li.classList.toggle("completed", checkbox.checked);
+          });
+
+          li.addEventListener("click", () => {
+            toggleDone();
+          });
+
+          li.appendChild(checkbox);
+          li.appendChild(span);
+          listEl.appendChild(li);
+        });
+      }
+
+      // "Start Over" Buttons
+      function restart() {
+        resultsSection.classList.remove("active");
+        inputCard.style.display = "block";
+        taskInput.value = "";
+        updateTaskCounter();
+        validationAlert.classList.remove("active");
+        window.scrollTo({ top: inputCard.offsetTop - 30, behavior: "smooth" });
+        taskInput.focus();
+      }
+
+      restartTopBtn.addEventListener("click", restart);
+      restartBottomBtn.addEventListener("click", restart);
+
+      // "Copy Results" Buttons
+      function copyResults() {
+        if (!state.lastSortedData) return;
+
+        const { categories, label } = state.lastSortedData;
+        const formatted = [
+          `🦥 LazyList AI — Task Summary`,
+          `Mode: ${label}`,
+          `Tagline: Do less. Stress less.`,
+          ``,
+          `⚡ DO NOW (${categories.doNow.length}):`,
+          categories.doNow.length ? categories.doNow.map(t => `  • [ ] ${t}`).join("\n") : "  (None)",
+          ``,
+          `🌿 DO LATER (${categories.doLater.length}):`,
+          categories.doLater.length ? categories.doLater.map(t => `  • [ ] ${t}`).join("\n") : "  (None)",
+          ``,
+          `🦥 SKIP OR SIMPLIFY (${categories.skipOrSimplify.length}):`,
+          categories.skipOrSimplify.length ? categories.skipOrSimplify.map(t => `  • [ ] ${t}`).join("\n") : "  (None)",
+          ``,
+          `— Less busywork. More breathing room.`
+        ].join("\n");
+
+        navigator.clipboard.writeText(formatted).then(() => {
+          showToast("📋 Results copied to clipboard! 🦥");
+        }).catch(() => {
+          // Fallback if clipboard API is restricted
+          const ta = document.createElement("textarea");
+          ta.value = formatted;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          showToast("📋 Results copied to clipboard! 🦥");
+        });
+      }
+
+      copyTopBtn.addEventListener("click", copyResults);
+      copyBottomBtn.addEventListener("click", copyResults);
+
+      // Toast feedback helper
+      let toastTimer = null;
+      function showToast(msg) {
+        if (msg) toast.querySelector("span").textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove("show");
+        }, 2800);
+      }
+
+      // -----------------------------------------------------------------------
+      // OLLAMA TOGGLE & SETTINGS PANEL
+      // -----------------------------------------------------------------------
+      toggleAiPanelBtn.addEventListener("click", () => {
+        const isExpanded = ollamaPanel.classList.toggle("active");
+        toggleAiPanelBtn.setAttribute("aria-expanded", isExpanded);
+      });
+
+      closeAiPanelBtn.addEventListener("click", () => {
+        ollamaPanel.classList.remove("active");
+        toggleAiPanelBtn.setAttribute("aria-expanded", "false");
+      });
+
+      // Test Ollama Connection
+      testOllamaBtn.addEventListener("click", async () => {
+        const url = ollamaEndpointInput.value.trim() || "http://localhost:11434";
+        state.ollamaUrl = url;
+        ollamaStatusMsg.innerHTML = "⏳ Checking connection to " + url + "...";
+
+        try {
+          const res = await fetch(`${url.replace(/\/+$/, "")}/api/tags`, { method: "GET" });
+          if (res.ok) {
+            const data = await res.json();
+            const models = (data.models || []).map(m => m.name);
+            const hasModel = models.some(m => m.includes("qwen2.5:0.5b") || m.includes("qwen2.5"));
+            
+            state.isOllamaReachable = true;
+            ollamaStatusMsg.innerHTML = `<span style="color: var(--green-primary); font-weight:700;">✅ Ollama connected!</span> ` +
+              (hasModel 
+                ? `Found <code>${state.ollamaModel}</code>.` 
+                : `Connected, but model <code>${state.ollamaModel}</code> not found yet. Run <code>ollama pull ${state.ollamaModel}</code>.`);
+          } else {
+            throw new Error(`Status ${res.status}`);
+          }
+        } catch (err) {
+          state.isOllamaReachable = false;
+          ollamaStatusMsg.innerHTML = `<span style="color: #A04000; font-weight:600;">⚠️ Could not reach Ollama at ${url}.</span> ` +
+            `Ensure Ollama is running and CORS is enabled if using a browser (<code>OLLAMA_ORIGINS="*" ollama serve</code>). Falling back to Demo Mode.`;
+        }
+      });
+
+      // Enable / Disable Ollama Preference
+      enableOllamaBtn.addEventListener("click", () => {
+        state.preferOllama = !state.preferOllama;
+        state.ollamaUrl = ollamaEndpointInput.value.trim() || "http://localhost:11434";
+
+        if (state.preferOllama) {
+          enableOllamaBtn.textContent = "Switch to Demo Mode";
+          enableOllamaBtn.style.backgroundColor = "var(--green-primary)";
+          modePill.className = "mode-pill ollama-active";
+          modeLabel.textContent = `Local Ollama (${state.ollamaModel}) Preferred`;
+          showToast(`🤖 Ollama mode enabled (qwen2.5:0.5b)`);
+        } else {
+          enableOllamaBtn.textContent = "Use Ollama";
+          enableOllamaBtn.style.backgroundColor = "var(--text-main)";
+          modePill.className = "mode-pill demo";
+          modeLabel.textContent = "Demo Mode — Rule-based sorting";
+          showToast(`🌿 Switched to Demo Mode`);
+        }
+      });
+
+      // Auto-detect Ollama in background once on load
+      (async function autoDetectOllama() {
+        try {
+          const res = await fetch("http://localhost:11434/api/tags", { method: "GET" });
+          if (res.ok) {
+            const data = await res.json();
+            const models = (data.models || []).map(m => m.name);
+            const hasQwen = models.some(m => m.includes("qwen2.5:0.5b") || m.includes("qwen2.5"));
+            if (hasQwen) {
+              state.preferOllama = true;
+              state.isOllamaReachable = true;
+              modePill.className = "mode-pill ollama-active";
+              modeLabel.textContent = `Local Ollama (${state.ollamaModel}) Detected`;
+              enableOllamaBtn.textContent = "Switch to Demo Mode";
+              enableOllamaBtn.style.backgroundColor = "var(--green-primary)";
+            }
+          }
+        } catch (_) {
+          // Silent fallback to demo mode on startup — beginner friendly, no installation required
+        }
+      })();
+
+    })();
+  </script>
+</body>
+</html>
