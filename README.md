@@ -16,6 +16,10 @@
 [![AI Engine](https://img.shields.io/badge/AI-qwen2.5%3A0.5b%20(Ollama)-8E9C90?style=for-the-badge)](#-optional-open-weight-ai-with-ollama)
 [![License](https://img.shields.io/badge/License-MIT-EBF3ED?style=for-the-badge&logoColor=3F704D)](#-license)
 
+<br/>
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMdFaisalDevops%2Fslow-and-steady)
+
 </div>
 
 ---
