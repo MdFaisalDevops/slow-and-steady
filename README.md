@@ -11,10 +11,16 @@
 ### **Your tasks. Less stress.**
 *A tranquil, lightweight task organizer built for the **Slow and Steady** hackathon.*
 
-[![Tech Stack](https://img.shields.io/badge/Stack-HTML5%20%7C%20CSS3%20%7C%20Vanilla%20JS-3F704D?style=for-the-badge)](#-tech-stack)
-[![Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(0)-5C8F6B?style=for-the-badge)](#-zero-dependency-architecture)
-[![AI Engine](https://img.shields.io/badge/AI-qwen2.5%3A0.5b%20(Ollama)-8E9C90?style=for-the-badge)](#-optional-open-weight-ai-with-ollama)
+[![Live Demo](https://img.shields.io/badge/Live%20App-slow--and--steady--phi.vercel.app-3F704D?style=for-the-badge&logo=vercel)](https://slow-and-steady-phi.vercel.app/)
+[![Tech Stack](https://img.shields.io/badge/Stack-HTML5%20%7C%20CSS3%20%7C%20Vanilla%20JS-5C8F6B?style=for-the-badge)](#-tech-stack)
+[![Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(0)-8E9C90?style=for-the-badge)](#-zero-dependency-architecture)
+[![AI Engine](https://img.shields.io/badge/AI-qwen2.5%3A0.5b%20(Ollama)-3F704D?style=for-the-badge)](#-optional-open-weight-ai-with-ollama)
 [![License](https://img.shields.io/badge/License-MIT-EBF3ED?style=for-the-badge&logoColor=3F704D)](#-license)
+
+<br/>
+
+> 🌐 **Live Web App:** **[https://slow-and-steady-phi.vercel.app](https://slow-and-steady-phi.vercel.app/)**  
+> *No installation or configuration needed — test it live right now!*
 
 <br/>
 
@@ -73,17 +79,21 @@ Modern productivity tools are often loud, complex, and anxiety-inducing. Users d
 
 ---
 
-## ⚡ Quick Start (No Setup Required)
+## ⚡ Quick Start
 
 You do **not** need to install Node.js, Python, npm, or any external package to run LazyList AI.
 
-### Option 1: Direct Browser Access (Fastest)
+### Option 1: Live Web App (Instant — No Installation)
+Visit the live deployed app directly in your browser:  
+👉 **[https://slow-and-steady-phi.vercel.app](https://slow-and-steady-phi.vercel.app/)**
+
+### Option 2: Direct Local File
 Double-click [index.html](file:///c:/Users/mdfai/Downloads/Slow%20and%20Steady%20webapp/index.html) or open it directly in any browser:
 ```text
 file:///c:/Users/mdfai/Downloads/Slow%20and%20Steady%20webapp/index.html
 ```
 
-### Option 2: Local Web Server
+### Option 3: Local Web Server
 If you prefer running via a local HTTP server:
 
 **Using Python:**
